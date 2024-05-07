@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="86b09b09-4a25-4ca4-81c6-13d6e27879d7" name="Changes" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ExternalProjectsData">
+    <projectState path="$PROJECT_DIR$">
+      <ProjectState />
+    </projectState>
+  </component>
+  <component name="ExternalProjectsManager">
+    <system id="GRADLE">
+      <state>
+        <projects_view>
+          <tree_state>
+            <expand>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="BDC" type="f1a62948:ProjectNode" />
+              </path>
+            </expand>
+            <select />
+          </tree_state>
+        </projects_view>
+      </state>
+    </system>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 8
+}</component>
+  <component name="ProjectId" id="2eMlchZ7tBgbUl6Q0cU9ivyWLQq" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Application.OutlierDetection.executor": "Coverage",
+    "Gradle.BDC [:Back2Java.main()].executor": "Debug",
+    "Gradle.BDC [:G064HW1.main()].executor": "Run",
+    "Gradle.BDC [:MRApproxOutliers.main()].executor": "Run",
+    "Gradle.BDC [:OutlierDetection.main()].executor": "Run",
+    "Gradle.BDC [:Test.main()].executor": "Run",
+    "Gradle.BDC [:Trainings.main()].executor": "Run",
+    "Gradle.BDC [:WordCountExample.main()].executor": "Run",
+    "Gradle.Build BDC.executor": "Run",
+    "Gradle.Download Sources.executor": "Run",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "main",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/charl/Documents/UNIPD/BDC",
+    "project.structure.last.edited": "Project",
+    "project.structure.proportion": "0.15",
+    "project.structure.side.proportion": "0.0",
+    "settings.editor.selected.configurable": "preferences.keymap"
+  }
+}]]></component>
+  <component name="RunManager" selected="Application.G064HW1">
+    <configuration name="G064HW1" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="G064HW1" />
+      <module name="BDC.main" />
+      <option name="PROGRAM_PARAMETERS" value="2.0 3 3" />
+      <option name="VM_PARAMETERS" value="-Dspark.master=&quot;local[*]&quot;" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="MRApproxOutliers" type="Application" factoryName="Application" nameIsGenerated="true">
+      <option name="ALTERNATIVE_JRE_PATH" value="1.8" />
+      <option name="MAIN_CLASS_NAME" value="MRApproxOutliers" />
+      <module name="BDC.main" />
+      <option name="VM_PARAMETERS" value="-Dspark.master=&quot;local[*]&quot;" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="OutlierDetection" type="Application" factoryName="Application" activateToolWindowBeforeRun="false" temporary="true" nameIsGenerated="true">
+      <option name="ALTERNATIVE_JRE_PATH" value="1.8" />
+      <option name="MAIN_CLASS_NAME" value="OutlierDetection" />
+      <module name="BDC.main" />
+      <option name="VM_PARAMETERS" value="-Dspark.master=&quot;local[*]&quot;" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Test" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="Test" />
+      <module name="BDC.main" />
+      <option name="VM_PARAMETERS" value="-Dspark.master=&quot;local[*]&quot;" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="WordCountExample" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="WordCountExample" />
+      <module name="BDC.main" />
+      <option name="PROGRAM_PARAMETERS" value="4 sentence_small.txt" />
+      <option name="VM_PARAMETERS" value="-Dspark.master=&quot;local[*]&quot;" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <list>
+      <item itemvalue="Application.MRApproxOutliers" />
+      <item itemvalue="Application.G064HW1" />
+      <item itemvalue="Application.Test" />
+      <item itemvalue="Application.OutlierDetection" />
+      <item itemvalue="Application.WordCountExample" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Application.OutlierDetection" />
+        <item itemvalue="Application.WordCountExample" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="86b09b09-4a25-4ca4-81c6-13d6e27879d7" name="Changes" comment="" />
+      <created>1711722411251</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1711722411251</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/BDC$OutlierDetection.ic" NAME="OutlierDetection Coverage Results" MODIFIED="1712941723702" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true" />
+  </component>
+</project>
