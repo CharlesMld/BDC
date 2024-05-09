@@ -10,7 +10,7 @@ Modified version of HW1 where D is equal to the radius of a k-center clustering 
 
 The goal of the homework will be to assess the effectiveness of this technique and test the scalability of a MapReduce implementation when run on large datasets.
 
-## Task 1 (Charles)
+## Task 1 (Charles) **DONE**
 Modify of method/function MRApproxOutliers written for HW1 by removing the parameter K and the printing of the first K cells in non-decreasing order of cell size. (Please note that in HW2, a parameter K is used outside MRApproxOutliers, but with a totally different meaning with respect to HW1). Also fix bugs (if any) that have been pointed out in the correction of HW1.
 
 ## Task 2 (Zhaku)
