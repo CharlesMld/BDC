@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["uber-large.csv","0.02","10","5","2"]
+            "args": ["uber-large.csv","0.02","10","2"]
         }
     ]
 }
