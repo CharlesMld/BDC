@@ -90,7 +90,7 @@ def main():
 
 
     global data_path,D,M,L
-    MAX_POINTS = 200000
+    
     
     # Parse command-line arguments
     data_path = sys.argv[1]
