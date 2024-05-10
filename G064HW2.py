@@ -32,7 +32,7 @@ def MRApproxOutliers(inputPoints, D, M):
     
     # Step A
     # cells_counts is an RDD whose elements are (cell, number of points)
-    cells_counts = inputPoints.mapPartitions(pointToCell).reduceByKey(lambda a,b: a + b)
+    cells_counts = inputPoints.map(pointToCell).reduceByKey(lambda a,b: a + b)
     # Assuming there are few non-empty cells I can save the RDD in a dictionary
     cells_counts_dict = cells_counts.collectAsMap()
     
