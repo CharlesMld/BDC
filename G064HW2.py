@@ -5,6 +5,7 @@ import random as rand
 from pyspark.mllib.linalg import Vectors
 import math
 import time
+import copy
 
 # Definition of global variables
 data_path = None
@@ -80,14 +81,12 @@ def MRApproxOutliers(inputPoints, D, M):
     print("Running time of MRApproxOutliers =", running_time_ms, "ms")
     return outlierPoints
 
-def euclidean_distance(point1, point2):
-    return math.sqrt(sum((p1 - p2)**2 for p1, p2 in zip(point1, point2)))
 
-def closest_center(C,point):
+
+def closest_center(C,point): #point and center is tuple
     min = float('inf')
-    
     for center in C:
-        distance = euclidean_distance(center, point)
+        distance = math.dist(center,point)
         if distance < min:
             min = distance
     
@@ -95,21 +94,27 @@ def closest_center(C,point):
     return dist_C
 
 def SequentialFFT(P,K):
-    inputPoints = [tuple(p) for p in P]
-    # Randomly take 1 instance as first center (no replacement), seed=42 for reproducibility
-    rand.seed(42)
-    C = []
-    C .append(rand.choice(inputPoints))  # Select a random point from inputPoints 
-
-    max_dist = 0
-    for i in range(K-1) :
-        for point in inputPoints:
-            distance = closest_center(C,point)
-            if  distance > max_dist:
-                max_dist = distance
-                cand_center = point
     
+    rand.seed(42)
+    c_1 = rand.choice(P)
+    print(f"c1={c_1}")
+    C = []
+    C.append(c_1) 
+    
+    for i in range(K-1) :
+        max_dist = 0    
+        for point in P:                   
+            if point not in C:                                                           
+                distance = closest_center(C,point)  
+                if  distance > max_dist:
+                    max_dist = distance
+                    cand_center = copy.deepcopy(point)
+                    print(f"cand = {cand_center}")
+        
+        
         C.append(cand_center)
+        
+
     return C
 
 
