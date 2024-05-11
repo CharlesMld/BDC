@@ -80,14 +80,13 @@ def MRApproxOutliers(inputPoints, D, M):
     print("Running time of MRApproxOutliers =", running_time_ms, "ms")
     return outlierPoints
 
-def euclidean_distance(point1, point2):
-    return math.sqrt(sum((p1 - p2)**2 for p1, p2 in zip(point1, point2)))
+#def euclidean_distance(point1, point2):
+ #   return math.sqrt(sum((p1 - p2)**2 for p1, p2 in zip(point1, point2)))
 
-def closest_center(C,point):
+def closest_center(C,point): #point and center is tuple
     min = float('inf')
-    
     for center in C:
-        distance = euclidean_distance(center, point)
+        distance = math.dist(center,point)
         if distance < min:
             min = distance
     
@@ -95,22 +94,36 @@ def closest_center(C,point):
     return dist_C
 
 def SequentialFFT(P,K):
+    
     inputPoints = [tuple(p) for p in P]
-    # Randomly take 1 instance as first center (no replacement), seed=42 for reproducibility
     rand.seed(42)
+    c_1 = tuple(rand.choice(inputPoints))
     C = []
-    C .append(rand.choice(inputPoints))  # Select a random point from inputPoints 
-
+    C.append(c_1) 
+    inputPoints.remove(c_1)
+    
     max_dist = 0
+    # Tuples are immutable so assignment of cand fails , this is the problem to fix
     for i in range(K-1) :
-        for point in inputPoints:
+        cand_center = (float(-10), float(-10)) # reinitialize candidate at each iteration
+        for point in inputPoints: #add condition and point not in C to avoid centers while
+                                  # not removing anything from inputPoints
+                                  # Very nice since removal takes O(n) time 
             distance = closest_center(C,point)
             if  distance > max_dist:
                 max_dist = distance
                 cand_center = point
-    
+                print(f"cand cand = {cand_center}")
+        
+        
         C.append(cand_center)
-        inputPoints.remove(cand_center)
+        print(f"Before removal: {inputPoints}")
+        try:
+            inputPoints.remove(cand_center)  # Try to remove the candidate center from inputPoints
+        except ValueError:
+            print(f"ValueError: {cand_center} not found in inputPoints")
+            print(f"After removal: {inputPoints}")
+
     return C
 
 
