@@ -104,7 +104,7 @@ def SequentialFFT(P,K):
     for i in range(K-1) :
         max_dist = 0    
         for point in P:                   
-            if point not in C:                                                           
+            if point not in C:    # This condition avoids removing elements from P, remove method is O(n)                                                      
                 distance = closest_center(C,point)  
                 if  distance > max_dist:
                     max_dist = distance
@@ -148,7 +148,7 @@ def main():
     P = inputPoints.collect()
 
     #MRApproxOutliers(inputPoints,D,M)
-    centers = SequentialFFT(P,6) 
+    centers = SequentialFFT(P,3) 
     print(f"centers = {centers}")   
     
 
