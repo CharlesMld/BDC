@@ -105,24 +105,24 @@ def SequentialFFT(P,K):
     max_dist = 0
     # Tuples are immutable so assignment of cand fails , this is the problem to fix
     for i in range(K-1) :
-        cand_center = (float(-10), float(-10)) # reinitialize candidate at each iteration
+        cand_center = [float(-10), float(-10)] # reinitialize candidate at each iteration
         for point in inputPoints: #add condition and point not in C to avoid centers while
                                   # not removing anything from inputPoints
                                   # Very nice since removal takes O(n) time 
             distance = closest_center(C,point)
             if  distance > max_dist:
                 max_dist = distance
-                cand_center = point
+                cand_center = list(point)
                 print(f"cand cand = {cand_center}")
         
         
         C.append(cand_center)
-        print(f"Before removal: {inputPoints}")
+        #print(f"Before removal: {inputPoints}")
         try:
             inputPoints.remove(cand_center)  # Try to remove the candidate center from inputPoints
         except ValueError:
             print(f"ValueError: {cand_center} not found in inputPoints")
-            print(f"After removal: {inputPoints}")
+            #print(f"After removal: {inputPoints}")
 
     return C
 
