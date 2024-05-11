@@ -110,6 +110,7 @@ def SequentialFFT(P,K):
                 cand_center = point
     
         C.append(cand_center)
+        inputPoints.remove(cand_center)
     return C
 
 
