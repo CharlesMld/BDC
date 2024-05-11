@@ -80,6 +80,41 @@ def MRApproxOutliers(inputPoints, D, M):
     print("Running time of MRApproxOutliers =", running_time_ms, "ms")
     return outlierPoints
 
+def euclidean_distance(point1, point2):
+    return math.sqrt(sum((p1 - p2)**2 for p1, p2 in zip(point1, point2)))
+
+def closest_center(C,point):
+    min = float('inf')
+    
+    for center in C:
+        distance = euclidean_distance(center, point)
+        if distance < min:
+            min = distance
+    
+    dist_C = min
+    return dist_C
+
+def SequentialFFT(P,K):
+    inputPoints = [tuple(p) for p in P]
+    # Randomly take 1 instance as first center (no replacement), seed=42 for reproducibility
+    rand.seed(42)
+    C = []
+    C .append(rand.choice(inputPoints))  # Select a random point from inputPoints 
+
+    max_dist = 0
+    for i in range(K-1) :
+        for point in inputPoints:
+            distance = closest_center(C,point)
+            if  distance > max_dist:
+                max_dist = distance
+                cand_center = point
+    
+        C.append(cand_center)
+    return C
+
+
+
+
 def main():
     print("Starting...")
     conf = SparkConf().setMaster("local").setAppName('G064HW2')
@@ -90,7 +125,7 @@ def main():
 
 
     global data_path,D,M,L
-    MAX_POINTS = 200000
+    
     
     # Parse command-line arguments
     data_path = sys.argv[1]
@@ -105,8 +140,13 @@ def main():
     
     print("Number of points =",inputPoints.count())
 
-    MRApproxOutliers(inputPoints,D,M)
-        
+    P = inputPoints.collect()
+
+    #MRApproxOutliers(inputPoints,D,M)
+    centers = SequentialFFT(P,6) 
+    print(f"centers = {centers}")   
     
+
+
 if __name__ == "__main__":
 	main()
