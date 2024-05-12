@@ -13,7 +13,6 @@ D = None
 M = None
 L = None
 
-
 def MRApproxOutliers(inputPoints, D, M):
     start_time = time.time()
     
@@ -81,44 +80,14 @@ def MRApproxOutliers(inputPoints, D, M):
     print("Running time of MRApproxOutliers =", running_time_ms, "ms")
     return outlierPoints
 
-
-
-def closest_center(C,point): #point and center is tuple
-    min = float('inf')
-    for center in C:
-        distance = math.dist(center,point)
-        if distance < min:
-            min = distance
-    
-    dist_C = min
-    return dist_C
-
 def SequentialFFT(P,K):
-    
-    rand.seed(42)
-    c_1 = rand.choice(P)
-    print(f"c1={c_1}")
-    C = []
-    C.append(c_1) 
-    
-    for i in range(K-1) :
-        max_dist = 0    
-        for point in P:                   
-            if point not in C:    # This condition avoids removing elements from P, remove method is O(n)                                                      
-                distance = closest_center(C,point)  
-                if  distance > max_dist:
-                    max_dist = distance
-                    cand_center = copy.deepcopy(point)
-                    print(f"cand = {cand_center}")
-        
-        
-        C.append(cand_center)
-        
-
-    return C
-
-
-
+    centers = [rand.choice(P)] # we choose the first center randomly
+    while len(centers) < K:
+        # we calculate the farthest point from the existing centers
+        farthest_point = max(P, key=lambda point: min(math.dist(point, center) for center in centers))
+        # we add the farthest point to the centers list
+        centers.append(farthest_point)
+    return centers
 
 def main():
     print("Starting...")
@@ -148,10 +117,8 @@ def main():
     P = inputPoints.collect()
 
     #MRApproxOutliers(inputPoints,D,M)
-    centers = SequentialFFT(P,3) 
-    print(f"centers = {centers}")   
-    
-
+    centers = SequentialFFT(P,6) 
+    print(f"centers = {centers}")
 
 if __name__ == "__main__":
 	main()
