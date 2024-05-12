@@ -43,8 +43,8 @@ def main():
     conf = SparkConf().setMaster("local").setAppName('MRFFT')
     sc = SparkContext(conf=conf)
     rawData = sc.textFile("input.txt")
-    rawData = rawData.map(lambda line: [float(i) for i in line.split(",")])
-    MRFFT(rawData, 3)
+    inputPoints = rawData.map(lambda line: [float(i) for i in line.split(",")])
+    MRFFT(inputPoints, 3)
 
 if __name__ == "__main__":
     main()
