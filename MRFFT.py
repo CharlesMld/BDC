@@ -21,16 +21,20 @@ def main():
     K = 3    
     # list = [[0.4, 0.9], [0.5, 4.1], [0.8, 0.91], [0.81, 1.1], [1.1, 5.0], [1.11, 5.1], [1.5, 1.1], [1.52, 1.11], [1.53,1.12], [1.54,1.13], 
     #        [1.51,3.2], [1.52,3.6], [3.21,4.6], [4.11,4.11], [4.32,4.3]]
-    rawData = sc.textFile("input.txt").repartition(2)
+    rawData = sc.textFile("artificial1M_9_100.csv").repartition(10)
     rawData = rawData.map(lambda line: [float(i) for i in line.split(",")])
     # Partition 1: ["0.4,0.9", "0.5,4.1", "0.8,0.91", "0.81,1.1"]
     # Partition 2: ["1.1,5.0", "1.11,5.1", "1.5,1.1", "1.52,1.11"]
     # inputPoints = rawData.map(lambda line: [float(i) for i in line.split(",")])
-    print(rawData.glom().collect())
+    # print(rawData.glom().collect())
     # Partition 1: [[0.4, 0.9], [0.5, 4.1], [0.8, 0.91], [0.81, 1.1]]
     # Partition 2: [[1.1, 5.0], [1.11, 5.1], [1.5, 1.1], [1.52, 1.11]]
     # P = inputPoints.collect() to collect all points in a list
-    print(rawData.mapPartitions(MRFFT).collect())
+    centers = rawData.mapPartitions(MRFFT).collect()
+    RDDcenters = sc.parallelize(centers)
+    centers = RDDcenters.mapPartitions(MRFFT).collect()
+    print("Final centers of the first round:", centers,"\n")
+    # centers = centers.reduce(MRFFT)
 
 if __name__ == "__main__":
     main()
