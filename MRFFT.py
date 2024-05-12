@@ -3,14 +3,14 @@ import random as rand
 import math
 
 def SequentialFFT(P,K):
-    list = [element for element in P]
-    centers = [rand.choice(list)] # we choose the first center randomly
-    while len(centers) < K:
+    listP = [element for element in P] # Changed name because list is a python keyword
+    C = [rand.choice(listP)] # we choose the first center randomly, C is set of centers
+    while len(C) < K:
         # we calculate the farthest point from the existing centers
-        farthest_point = max(list, key=lambda point: min(math.dist(point, center) for center in centers))
+        farthest_point = max(listP, key=lambda point: min(math.dist(point, center) for center in C))
         # we add the farthest point to the centers list
-        centers.append(farthest_point)
-    return centers
+        C.append(farthest_point)
+    return C
 
 def MRFFT(P, K):
     print("Starting MRFFT...")
@@ -20,11 +20,16 @@ def MRFFT(P, K):
     print("Centers per partition: ", centers_per_partition.collect(), "\n")
     
     print("----------------- ROUND 2 -----------------\n")
-    centers = SequentialFFT(centers_per_partition.collect(), K)
-    print("Centers: ", centers, "\n")
+    C = SequentialFFT(centers_per_partition.collect(), K) # C is the set of centers
+    print("Centers: ", C, "\n")
 
     print("----------------- ROUND 3 -----------------\n")
     print(type(P))
+
+    
+
+
+
     # R = max(P, key=lambda point: min(math.dist(point, center) for center in centers_per_partition.collect()))
 
 
