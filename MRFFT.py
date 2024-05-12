@@ -27,8 +27,21 @@ def MRFFT(P, K):
     print(type(P))
 
     
+    context = SparkContext.getOrCreate()
+    #print(f"app name context={context.appName}")
+    #print(f"config context = {context.getConf}")
+    broad = context.broadcast(C)
+    print(f"broad ={broad.value}")
+    
+    
+    
 
+    
+    
+        
+    
 
+   
 
     # R = max(P, key=lambda point: min(math.dist(point, center) for center in centers_per_partition.collect()))
 
@@ -43,13 +56,29 @@ def MRFFT(P, K):
     # print("Centers: ", centers, "List: ", list)
     # return centers
 
+def count_active_spark_contexts(): # This is just to count the number of contexts so I'm sure it's only 1
+    active_contexts = SparkContext._active_spark_context
+    if active_contexts is None:
+        return 0
+    elif isinstance(active_contexts, list):
+        return len(active_contexts)
+    else:
+        return 1
+
 def main():
     print("Starting...")
     conf = SparkConf().setMaster("local").setAppName('MRFFT')
     sc = SparkContext(conf=conf)
+    print(f"app name sc = {sc.appName}")
+    print(f"config sc = {sc.getConf}")
     rawData = sc.textFile("input.txt")
     inputPoints = rawData.map(lambda line: [float(i) for i in line.split(",")])
     MRFFT(inputPoints, 3)
+    
+    num_active_contexts = count_active_spark_contexts()
+    print(f"Number of active Spark contexts: {num_active_contexts}")
+    
 
 if __name__ == "__main__":
     main()
+    
