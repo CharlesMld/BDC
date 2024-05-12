@@ -25,6 +25,8 @@ def MRFFT(P, K):
 
     print("----------------- ROUND 3 -----------------\n")
     print(type(P))
+    farthest_point_per_partition = partitions.reduce(lambda partition: max(partition, key=lambda point: min(math.dist(point, center) for center in centers)))
+    print("Farthest point per partition: ", farthest_point_per_partition.collect(), "\n")
     # R = max(P, key=lambda point: min(math.dist(point, center) for center in centers_per_partition.collect()))
 
 
