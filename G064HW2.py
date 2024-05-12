@@ -13,7 +13,6 @@ D = None
 M = None
 L = None
 
-
 def MRApproxOutliers(inputPoints, D, M):
     start_time = time.time()
     
@@ -80,18 +79,6 @@ def MRApproxOutliers(inputPoints, D, M):
     running_time_ms = int((end_time - start_time) * 1000)
     print("Running time of MRApproxOutliers =", running_time_ms, "ms")
     return outlierPoints
-
-
-
-def closest_center(C,point): #point and center is tuple
-    min = float('inf')
-    for center in C:
-        distance = math.dist(center,point)
-        if distance < min:
-            min = distance
-    
-    dist_C = min
-    return dist_C
 
 def SequentialFFT(P,K):
     centers = [rand.choice(P)] # we choose the first center randomly
