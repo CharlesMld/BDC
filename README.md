@@ -21,6 +21,10 @@ Write a method/function MRFFT which takes in input a set P of points, stored in 
 - Round 1 and 2 compute a set C of K centers, using the MR-FarthestFirstTraversal algorithm described in class. The coreset computed in Round 1, must be gathered in an ArrayList in Java, or a list in Python, and, in Round 2, the centers are obtained by running SequentialFFT on the coreset.
 - Round 3 computes the radius R of the clustering induced by centers. Which is $max(dist(x,C)), \forall x\in P$. Impossible to download P to compute R since its too large. We must keep it stored as an RDD. However, the set of centers C computed in Round 2, can be used as a global variable. We're asked to copy C into a broadcast variable which can be accessed by the RDD methods that will be used to compute R. For efficiency, we suggest to compute the maximum of the $dist(x,C)$ distances with a reduce operation, which Sparks implements exploiting the partitions.
 
+Note for round 3 : 
+- P.map(for each point x take the min(x,C)) then we get an RDD of float (which are min distances of each point from the set of centers C)
+- P.reduce(take the max distance from C for each distance in P)
+
 **MRFFT must compute and print, separately, the running time required by each of the above 3 rounds.**
 
 ## Task 4

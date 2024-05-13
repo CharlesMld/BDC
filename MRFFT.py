@@ -32,30 +32,16 @@ def MRFFT(P, K):
     print("Centers: ", C, "\n")
 
     print("----------------- ROUND 3 -----------------\n")
-    print(type(P))
-    farthest_point_per_partition = partitions.mapPartitions(lambda partition: FarthestPoint(partition, C))
-    print("Farthest points for each partition: ", farthest_point_per_partition.collect(), "\n")
-    farthestpoint = max(farthest_point_per_partition.collect(), key=lambda point: min(math.dist(point, center) for center in C))
-    print("Farthest point of all: ", farthestpoint, "\n")
+    points_2_distances = P.map(lambda point: min(math.dist(point, center) for center in centers))
+    print("Distances: ", points_2_distances.collect(), "\n")
+    FarthestPoint = points_2_distances.reduce(lambda x, y: max(x, y))
+    print("Radius: ", FarthestPoint, "\n")
 
-    
     context = SparkContext.getOrCreate()
     #print(f"app name context={context.appName}")
     #print(f"config context = {context.getConf}")
     broad = context.broadcast(C)
     print(f"broad ={broad.value}")
-    
-    
-    
-
-    
-    
-        
-    
-
-   
-
-    # R = max(P, key=lambda point: min(math.dist(point, center) for center in centers_per_partition.collect()))
 
 
     # list = [element for element in partitions]
