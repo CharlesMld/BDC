@@ -29,10 +29,10 @@ def MRFFT(P, K):
     print("Centers: ", centers, "\n")
 
     print("----------------- ROUND 3 -----------------\n")
-    farthest_point_per_partition = partitions.mapPartitions(lambda partition: FarthestPoint(partition, centers))
-    print("Farthest points for each partition: ", farthest_point_per_partition.collect(), "\n")
-    farthestpoint = max(farthest_point_per_partition.collect(), key=lambda point: min(math.dist(point, center) for center in centers))
-    print("Farthest point of all: ", farthestpoint, "\n")
+    points_2_distances = P.map(lambda point: min(math.dist(point, center) for center in centers))
+    print("Distances: ", points_2_distances.collect(), "\n")
+    FarthestPoint = P.reduce(lambda x, y: max(x, y))
+    print("Max distance = Radius: ", FarthestPoint, "\n")
 
 
     # list = [element for element in partitions]
