@@ -80,12 +80,14 @@ def MRApproxOutliers(inputPoints, D, M):
     print("Running time of MRApproxOutliers =", running_time_ms, "ms")
     return outlierPoints
 
+# Now wants a list as input
 def SequentialFFT(P,K):
-    listP = [element for element in P] # Changed name because list is a python keyword
-    C = [rand.choice(listP)] # we choose the first center randomly, C is set of centers
+    #listP = [element for element in P] # Changed name because list is a python keyword
+    C = [rand.choice(P)] # we choose the first center randomly, C is set of centers
     while len(C) < K:
         # we calculate the farthest point from the existing centers
-        farthest_point = max(listP, key=lambda point: min(math.dist(point, center) for center in C))
+        # Fixed an issue here, we should check for new centers in P-C , not in P as before
+        farthest_point = max((point for point in P if point not in C), key=lambda point: min(math.dist(point, center) for center in C))
         # we add the farthest point to the centers list
         C.append(farthest_point)
     return C
@@ -100,7 +102,7 @@ def MRFFT(P, K):
     print("Starting MRFFT...")
     partitions = P.repartition(10)
     print("----------------- ROUND 1 -----------------\n")
-    centers_per_partition = partitions.mapPartitions(lambda partition: SequentialFFT(partition, K)) # The result is an RDD of lists of centers , one list per partition
+    centers_per_partition = partitions.mapPartitions(lambda partition: SequentialFFT(list(partition), K))
     print("Centers per partition: ", centers_per_partition.collect(), "\n")
     
     print("----------------- ROUND 2 -----------------\n")
@@ -108,18 +110,16 @@ def MRFFT(P, K):
     print("Centers: ", C, "\n")
 
     print("----------------- ROUND 3 -----------------\n")
-    print(type(P))
-    farthest_point_per_partition = partitions.mapPartitions(lambda partition: FarthestPoint(partition, C))
-    print("Farthest points for each partition: ", farthest_point_per_partition.collect(), "\n")
-    farthestpoint = max(farthest_point_per_partition.collect(), key=lambda point: min(math.dist(point, center) for center in C))
-    print("Farthest point of all: ", farthestpoint, "\n")
-
-    
     context = SparkContext.getOrCreate()
-    #print(f"app name context={context.appName}")
-    #print(f"config context = {context.getConf}")
-    broad = context.broadcast(C)
-    print(f"broad ={broad.value}")
+    broadcast_C = context.broadcast(C)
+    print(f"broad ={broadcast_C.value}")
+
+    points_2_distances = P.map(lambda point: min(math.dist(point, center) for center in broadcast_C.value))
+    print("Distances: ", points_2_distances.collect(), "\n")
+    FarthestPoint = points_2_distances.reduce(lambda x, y: max(x, y))
+    print("Radius: ", FarthestPoint, "\n")
+    
+    return FarthestPoint
 
 def main():
     print("Starting...")
@@ -130,27 +130,28 @@ def main():
     assert len(sys.argv) == 5, "Usage: python G064HW2.py <file_name> <D> <M> <L>"
 
 
-    global data_path,D,M,L
+    global data_path,M,K,L
     
     
     # Parse command-line arguments
     data_path = sys.argv[1]
-    D = float(sys.argv[2])
-    M = int(sys.argv[3])
+    M = float(sys.argv[2])
+    K = int(sys.argv[3])
     L = int(sys.argv[4])
 
-    print(f"{data_path} D={D} M={M} L={L}")
+    print(f"{data_path} M={M} K={K} L={L}")
     
     rawData = sc.textFile(data_path).repartition(numPartitions=L)
     inputPoints = rawData.map(lambda line: [float(i) for i in line.split(",")])
     
     print("Number of points =",inputPoints.count())
 
-    P = inputPoints.collect()
+    #P = inputPoints.collect()
 
-    #MRApproxOutliers(inputPoints,D,M)
-    centers = SequentialFFT(P,6) 
-    print(f"centers = {centers}")
+    D = MRFFT(inputPoints,K)
+
+    MRApproxOutliers(inputPoints,D,M)
+    
 
 if __name__ == "__main__":
 	main()
