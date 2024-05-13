@@ -8,7 +8,8 @@ def SequentialFFT(P,K):
     C = [rand.choice(P)] # we choose the first center randomly, C is set of centers
     while len(C) < K:
         # we calculate the farthest point from the existing centers
-        farthest_point = max(P, key=lambda point: min(math.dist(point, center) for center in C))
+        # Fixed an issue here, we should check for new centers in P-C , not in P as before
+        farthest_point = max((point for point in P if point not in C), key=lambda point: min(math.dist(point, center) for center in C))
         # we add the farthest point to the centers list
         C.append(farthest_point)
     return C
