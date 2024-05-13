@@ -12,11 +12,6 @@ def SequentialFFT(P,K):
         centers.append(farthest_point)
     return centers
 
-def FarthestPoint(P, centers):
-    list = [element for element in P]
-    farthestpoints = [max(list, key=lambda point: min(math.dist(point, center) for center in centers))]
-    return farthestpoints
-
 def MRFFT(P, K):
     print("Starting MRFFT...")
     partitions = P.repartition(10)
@@ -31,8 +26,8 @@ def MRFFT(P, K):
     print("----------------- ROUND 3 -----------------\n")
     points_2_distances = P.map(lambda point: min(math.dist(point, center) for center in centers))
     print("Distances: ", points_2_distances.collect(), "\n")
-    FarthestPoint = P.reduce(lambda x, y: max(x, y))
-    print("Max distance = Radius: ", FarthestPoint, "\n")
+    FarthestPoint = points_2_distances.reduce(lambda x, y: max(x, y))
+    print("Radius: ", FarthestPoint, "\n")
 
 
     # list = [element for element in partitions]
