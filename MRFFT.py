@@ -2,21 +2,29 @@ from pyspark import SparkContext, SparkConf
 import random as rand
 import math
 
+# Now wants a list as input
 def SequentialFFT(P,K):
-    listP = [element for element in P] # Changed name because list is a python keyword
-    C = [rand.choice(listP)] # we choose the first center randomly, C is set of centers
+    #listP = [element for element in P] # Changed name because list is a python keyword
+    C = [rand.choice(P)] # we choose the first center randomly, C is set of centers
     while len(C) < K:
         # we calculate the farthest point from the existing centers
-        farthest_point = max(listP, key=lambda point: min(math.dist(point, center) for center in C))
+        farthest_point = max(P, key=lambda point: min(math.dist(point, center) for center in C))
         # we add the farthest point to the centers list
         C.append(farthest_point)
     return C
+
+def FarthestPoint(P, centers):
+    list = [element for element in P]
+    farthestpoints = [max(list, key=lambda point: min(math.dist(point, center) for center in centers))]
+    return farthestpoints
+
+
 
 def MRFFT(P, K):
     print("Starting MRFFT...")
     partitions = P.repartition(10)
     print("----------------- ROUND 1 -----------------\n")
-    centers_per_partition = partitions.mapPartitions(lambda partition: SequentialFFT(partition, K))
+    centers_per_partition = partitions.mapPartitions(lambda partition: SequentialFFT(list(partition), K))
     print("Centers per partition: ", centers_per_partition.collect(), "\n")
     
     print("----------------- ROUND 2 -----------------\n")
@@ -25,6 +33,10 @@ def MRFFT(P, K):
 
     print("----------------- ROUND 3 -----------------\n")
     print(type(P))
+    farthest_point_per_partition = partitions.mapPartitions(lambda partition: FarthestPoint(partition, C))
+    print("Farthest points for each partition: ", farthest_point_per_partition.collect(), "\n")
+    farthestpoint = max(farthest_point_per_partition.collect(), key=lambda point: min(math.dist(point, center) for center in C))
+    print("Farthest point of all: ", farthestpoint, "\n")
 
     
     context = SparkContext.getOrCreate()
@@ -75,9 +87,7 @@ def main():
     inputPoints = rawData.map(lambda line: [float(i) for i in line.split(",")])
     MRFFT(inputPoints, 3)
     
-    num_active_contexts = count_active_spark_contexts()
-    print(f"Number of active Spark contexts: {num_active_contexts}")
-    
+    print("Number of points =",inputPoints.count())
 
 if __name__ == "__main__":
     main()

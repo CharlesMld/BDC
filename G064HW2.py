@@ -9,11 +9,11 @@ import copy
 
 # Definition of global variables
 data_path = None
-D = None
 M = None
+K = None
 L = None
 
-def MRApproxOutliers(inputPoints, D, M):
+def MRApproxOutliers(inputPoints, D, M): 
     start_time = time.time()
     
     omega = D/(2*math.sqrt(2))
@@ -81,13 +81,45 @@ def MRApproxOutliers(inputPoints, D, M):
     return outlierPoints
 
 def SequentialFFT(P,K):
-    centers = [rand.choice(P)] # we choose the first center randomly
-    while len(centers) < K:
+    listP = [element for element in P] # Changed name because list is a python keyword
+    C = [rand.choice(listP)] # we choose the first center randomly, C is set of centers
+    while len(C) < K:
         # we calculate the farthest point from the existing centers
-        farthest_point = max(P, key=lambda point: min(math.dist(point, center) for center in centers))
+        farthest_point = max(listP, key=lambda point: min(math.dist(point, center) for center in C))
         # we add the farthest point to the centers list
-        centers.append(farthest_point)
-    return centers
+        C.append(farthest_point)
+    return C
+
+def FarthestPoint(P, centers):
+    list = [element for element in P]
+    farthestpoints = [max(list, key=lambda point: min(math.dist(point, center) for center in centers))]
+    return farthestpoints
+
+
+def MRFFT(P, K):
+    print("Starting MRFFT...")
+    partitions = P.repartition(10)
+    print("----------------- ROUND 1 -----------------\n")
+    centers_per_partition = partitions.mapPartitions(lambda partition: SequentialFFT(partition, K)) # The result is an RDD of lists of centers , one list per partition
+    print("Centers per partition: ", centers_per_partition.collect(), "\n")
+    
+    print("----------------- ROUND 2 -----------------\n")
+    C = SequentialFFT(centers_per_partition.collect(), K) # C is the set of centers
+    print("Centers: ", C, "\n")
+
+    print("----------------- ROUND 3 -----------------\n")
+    print(type(P))
+    farthest_point_per_partition = partitions.mapPartitions(lambda partition: FarthestPoint(partition, C))
+    print("Farthest points for each partition: ", farthest_point_per_partition.collect(), "\n")
+    farthestpoint = max(farthest_point_per_partition.collect(), key=lambda point: min(math.dist(point, center) for center in C))
+    print("Farthest point of all: ", farthestpoint, "\n")
+
+    
+    context = SparkContext.getOrCreate()
+    #print(f"app name context={context.appName}")
+    #print(f"config context = {context.getConf}")
+    broad = context.broadcast(C)
+    print(f"broad ={broad.value}")
 
 def main():
     print("Starting...")
