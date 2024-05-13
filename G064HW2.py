@@ -92,10 +92,7 @@ def SequentialFFT(P,K):
         C.append(farthest_point)
     return C
 
-def FarthestPoint(P, centers):
-    list = [element for element in P]
-    farthestpoints = [max(list, key=lambda point: min(math.dist(point, center) for center in centers))]
-    return farthestpoints
+
 
 
 def MRFFT(P, K):
