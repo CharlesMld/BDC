@@ -32,16 +32,20 @@ def MRFFT(P, K):
     print("Centers: ", C, "\n")
 
     print("----------------- ROUND 3 -----------------\n")
-    points_2_distances = P.map(lambda point: min(math.dist(point, center) for center in centers))
+    context = SparkContext.getOrCreate()
+    broadcast_C = context.broadcast(C)
+    print(f"broad ={broadcast_C.value}")
+
+    points_2_distances = P.map(lambda point: min(math.dist(point, center) for center in broadcast_C.value))
     print("Distances: ", points_2_distances.collect(), "\n")
     FarthestPoint = points_2_distances.reduce(lambda x, y: max(x, y))
     print("Radius: ", FarthestPoint, "\n")
 
-    context = SparkContext.getOrCreate()
+    
     #print(f"app name context={context.appName}")
     #print(f"config context = {context.getConf}")
-    broad = context.broadcast(C)
-    print(f"broad ={broad.value}")
+    
+    
 
 
     # list = [element for element in partitions]
