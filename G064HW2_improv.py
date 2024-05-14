@@ -81,20 +81,22 @@ def MRApproxOutliers(inputPoints, D, M):
 MRFFT
 """
 def SequentialFFT(P, K):
-    remaining_points = set(tuple(point) for point in P)
-    centers = []
+    rand.seed(42)
+    centers = [tuple(rand.choice(P))]
+    remaining_points = set(tuple(point) for point in P if point not in centers)
     while len(centers) < K:
-        farthest_point = max(remaining_points, key=lambda p: min(math.dist(p, c) for c in centers) if centers else 0)
+        farthest_point = max(remaining_points, key=lambda p: min(math.dist(p, c) for c in centers) )
         remaining_points.remove(farthest_point)
         centers.append(farthest_point)
     return [list(center) for center in centers]
+
 
 
 def MRFFT(P, K):
     # ROUND 1
     st = time.time()
     
-    centers_per_partition = P.mapPartitions(lambda partition: [SequentialFFT(partition, K)])
+    centers_per_partition = P.mapPartitions(lambda partition: SequentialFFT(list(partition), K))
     centers_per_partition_count = centers_per_partition.count()
     centers_per_partition.cache()
     
@@ -104,7 +106,7 @@ def MRFFT(P, K):
     # ROUND 2
     st = time.time()
     
-    aggregated_centers = centers_per_partition.flatMap(lambda x: x).collect()
+    aggregated_centers = centers_per_partition.collect()
     C = SequentialFFT(aggregated_centers, K) # run SequentialFFT again to get the final set of centers
     
     et = time.time()
