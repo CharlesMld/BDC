@@ -1,18 +1,18 @@
 from pyspark import SparkContext, SparkConf
 import random as rand
 import math
-
+import heapq
+import time
 # Now wants a list as input
-def SequentialFFT(P,K):
-    #listP = [element for element in P] # Changed name because list is a python keyword
-    C = [rand.choice(P)] # we choose the first center randomly, C is set of centers
-    while len(C) < K:
-        # we calculate the farthest point from the existing centers
-        # Fixed an issue here, we should check for new centers in P-C , not in P as before
-        farthest_point = max((point for point in P if point not in C), key=lambda point: min(math.dist(point, center) for center in C))
-        # we add the farthest point to the centers list
-        C.append(farthest_point)
-    return C
+def SequentialFFT(P, K):
+    rand.seed(42)
+    centers = [tuple(rand.choice(P))]
+    remaining_points = set(tuple(point) for point in P if point not in centers)
+    while len(centers) < K:
+        farthest_point = max(remaining_points, key=lambda p: min(math.dist(p, c) for c in centers) )
+        remaining_points.remove(farthest_point)
+        centers.append(farthest_point)
+    return [list(center) for center in centers]
 
 def FarthestPoint(P, centers):
     list = [element for element in P]
@@ -59,14 +59,7 @@ def MRFFT(P, K):
     # print("Centers: ", centers, "List: ", list)
     # return centers
 
-def count_active_spark_contexts(): # This is just to count the number of contexts so I'm sure it's only 1
-    active_contexts = SparkContext._active_spark_context
-    if active_contexts is None:
-        return 0
-    elif isinstance(active_contexts, list):
-        return len(active_contexts)
-    else:
-        return 1
+
 
 def main():
     print("Starting...")
