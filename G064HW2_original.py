@@ -80,33 +80,31 @@ def MRApproxOutliers(inputPoints, D, M):
 """
 MRFFT
 """
-def SequentialFFT(P, K):
-    remaining_points = set(tuple(point) for point in P)
-    centers = []
-    while len(centers) < K:
-        farthest_point = max(remaining_points, key=lambda p: min(math.dist(p, c) for c in centers) if centers else 0)
-        remaining_points.remove(farthest_point)
-        centers.append(farthest_point)
-    return [list(center) for center in centers]
+def SequentialFFT(P,K):
+    C = [rand.choice(P)] # we choose the first center randomly, C is set of centers
+    while len(C) < K:
+        # we calculate the farthest point from the existing centers
+        # Fixed an issue here, we should check for new centers in P-C , not in P as before
+        farthest_point = max((point for point in P if point not in C), key=lambda point: min(math.dist(point, center) for center in C))
+        # we add the farthest point to the centers list
+        C.append(farthest_point)
+    return C
 
 
 def MRFFT(P, K):
     # ROUND 1
     st = time.time()
     
-    centers_per_partition = P.mapPartitions(lambda partition: [SequentialFFT(partition, K)])
+    partitions = P.repartition(10)
+    centers_per_partition = partitions.mapPartitions(lambda partition: SequentialFFT(list(partition), K))
     
     et = time.time()
     print(f"Running time of MRFFT Round 1 = {int((et - st) * 1000)} ms")
     
     # ROUND 2
     st = time.time()
-    """
-    C = SequentialFFT(centers_per_partition.flatMap(lambda x: x).collect(), K)
-    """
-    # aggregate centers from all partitions without collecting to the driver
-    aggregated_centers = centers_per_partition.aggregate([], lambda acc, x: acc + x, lambda acc1, acc2: acc1 + acc2)
-    C = SequentialFFT(aggregated_centers, K) # run SequentialFFT again to get the final set of centers
+    
+    C = SequentialFFT(centers_per_partition.collect(), K) # C is the set of centers
     
     et = time.time()
     print(f"Running time of MRFFT Round 2 = {int((et - st) * 1000)} ms")
@@ -116,7 +114,8 @@ def MRFFT(P, K):
     
     context = SparkContext.getOrCreate()
     broadcast_C = context.broadcast(C)
-    FarthestPoint = P.map(lambda point: min(math.dist(point, center) for center in broadcast_C.value)).reduce(max)
+    points_2_distances = P.map(lambda point: min(math.dist(point, center) for center in broadcast_C.value))
+    FarthestPoint = points_2_distances.reduce(lambda x, y: max(x, y))
     
     et = time.time()
     print(f"Running time of MRFFT Round 3 = {int((et - st) * 1000)} ms")
@@ -137,6 +136,8 @@ def main():
 
     # check and process command line args
     assert len(sys.argv) == 5, "Usage: python G064HW2.py <file_name> <M> <K> <L>"
+
+    global data_path, M, K, L
     
     data_path = sys.argv[1]
     M = int(sys.argv[2])
