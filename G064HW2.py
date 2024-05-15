@@ -80,15 +80,46 @@ def MRApproxOutliers(inputPoints, D, M):
 """
 MRFFT
 """
+def find_duplicate_points(point_list):
+    # Create an empty dictionary to store the counts of each point
+    point_list = [tuple(point) for point in point_list]
+    point_counts = {}
+
+    # Iterate through the list of points and count occurrences
+    for point in point_list:
+        if point in point_counts:
+            point_counts[point] += 1
+        else:
+            point_counts[point] = 1
+
+    # Filter points that have count greater than 1 (i.e., duplicates)
+    duplicate_points = [point for point, count in point_counts.items() if count > 1]
+
+    return duplicate_points
+
 def SequentialFFT(P, K):
     rand.seed(42)
-    centers = [tuple(rand.choice(P))]
-    remaining_points = set(tuple(point) for point in P if point not in centers)
+    centers = [rand.choice(P)]
+    distances = [(i, math.dist(point, centers[0])) for i, point in enumerate(P)]
+
     while len(centers) < K:
-        farthest_point = max(remaining_points, key=lambda p: min(math.dist(p, c) for c in centers) )
-        remaining_points.remove(farthest_point)
+        # Find the farthest point
+        farthest_point_index, _ = max(distances, key=lambda x: x[1])
+        farthest_point = P[farthest_point_index]
+        
+        # Update distances for the newly added center
+        updated_distances = []
+        for i, point in enumerate(P):
+            if point not in centers:
+                distance_to_new_center = min(distances[i][1], math.dist(point, farthest_point))
+                updated_distances.append((i, distance_to_new_center))
+            else:
+                updated_distances.append(distances[i])
+
+        distances = updated_distances
         centers.append(farthest_point)
-    return [list(center) for center in centers]
+            
+    return centers
 
 
 
@@ -107,7 +138,8 @@ def MRFFT(P, K):
     st = time.time()
     
     aggregated_centers = centers_per_partition.collect()
-    C = SequentialFFT(aggregated_centers, K) # run SequentialFFT again to get the final set of centers
+    C = SequentialFFT(aggregated_centers, K)
+    print(f"centers={C}") # run SequentialFFT again to get the final set of centers
     
     et = time.time()
     print(f"Running time of MRFFT Round 2 = {int((et - st) * 1000)} ms")
@@ -151,12 +183,14 @@ def main():
     rawData = sc.textFile(data_path).repartition(numPartitions=L)
     inputPoints = rawData.map(lambda line: [float(i) for i in line.split(",")])
     
-    inputPoints.cache()
-    
+    #inputPoints.cache()
+    input = inputPoints.collect()
     print(f"Number of points = {inputPoints.count()}")
 
     D = MRFFT(inputPoints, K)
     MRApproxOutliers(inputPoints, D, M)
+    #dup = find_duplicate_points(input)
+    #print(f"dup={dup}")
 
 if __name__ == "__main__":
 	main()
