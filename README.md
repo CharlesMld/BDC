@@ -36,7 +36,7 @@ GxxxHW2.py (for Python users), where xxx is your 3-digit group number (e.g., 004
 - Executes MRApproxOutliers, modified as described above, with parameters inputPoints, D,M and prints its running time. (UPDATED)
 
 **IMPORTANT**\
-The program should receive command line arguments in the order specified and output should look like:\
+The program should receive command line arguments in the order specified and output should look like:
 >/data/BDC2324/uber-large.csv M=3 K=100 L=16\
 Number of points = 1880795\
 Running time of MRFFT Round 1 = 216 ms\
@@ -46,6 +46,26 @@ Radius = 0.10125376\
 Number of sure outliers = 11\
 Number of uncertain points = 42\
 Running time of MRApproxOutliers = 420 ms
+
+## Use the cluster on windows
+Launch Putty, milliaudch@login.dei.unipd.it then put DEI password.
+Once we entered the machine on UNIPD network type :
+``ssh -p 2222 group064@147.162.226.106``
+Then put group password : group064pwd
+
+Datasets stored in a folder, to view them :
+`hdfs dfs -ls /data/BDC2324`
+
+To upload files on machine :
+Uploading jobs (Python users). You must upload your program (e.g., GxxxHW2.py) to the group's account on the cluster (e.g., groupXXX). To do so you must use again your account on a unipd machine (e.g, account-name@login.dei.unipd.it) and do the following:\
+Transfer GxxxHW2.py to account-name@login.dei.unipd.it: you can use scp (on Linux and MacOS) or pscp (on Windows, installed along with Putty).
+Connect to account-name@login.dei.unipd.it and from there type the command:scp -P 2222 GxxxHW2.py groupXXX@147.162.226.106:. Please, in this last transfer make sure you use the option -P 2222 with capital P.
+If you are doing the access from a machine on the unipd network, you can directly copy the .py file from your machine to 147.162.226.106 via scp.
+
+To run python jobs on the machine :\
+``spark-submit --num-executors X G064HW2.py argument-list``\
+If wanna use a dataset, include file path like this :
+/data/BDC2324/filename 
 
 # Thoughts about HW2
 
