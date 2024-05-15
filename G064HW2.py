@@ -95,17 +95,16 @@ def MRFFT(P, K):
     st = time.time()
     
     centers_per_partition = P.mapPartitions(lambda partition: [SequentialFFT(partition, K)])
+    centers_per_partition_count = centers_per_partition.count()
+    centers_per_partition.cache()
     
     et = time.time()
     print(f"Running time of MRFFT Round 1 = {int((et - st) * 1000)} ms")
     
     # ROUND 2
     st = time.time()
-    """
-    C = SequentialFFT(centers_per_partition.flatMap(lambda x: x).collect(), K)
-    """
-    # aggregate centers from all partitions without collecting to the driver
-    aggregated_centers = centers_per_partition.aggregate([], lambda acc, x: acc + x, lambda acc1, acc2: acc1 + acc2)
+    
+    aggregated_centers = centers_per_partition.flatMap(lambda x: x).collect()
     C = SequentialFFT(aggregated_centers, K) # run SequentialFFT again to get the final set of centers
     
     et = time.time()
@@ -149,6 +148,8 @@ def main():
     # read data
     rawData = sc.textFile(data_path).repartition(numPartitions=L)
     inputPoints = rawData.map(lambda line: [float(i) for i in line.split(",")])
+    
+    inputPoints.cache()
     
     print(f"Number of points = {inputPoints.count()}")
 
