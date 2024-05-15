@@ -2,17 +2,13 @@ from pyspark import SparkContext, SparkConf
 import sys
 import os
 import random as rand
-from pyspark.mllib.linalg import Vectors
 import math
 import time
-import copy
 
-# Definition of global variables
-data_path = None
-M = None
-K = None
-L = None
 
+"""
+MRApproxOutliers
+"""
 def MRApproxOutliers(inputPoints, D, M): 
     start_time = time.time()
     
@@ -64,14 +60,14 @@ def MRApproxOutliers(inputPoints, D, M):
 
 
     
-   # Filter operation to select the cells sure and uncertain outlier cells 
+    # Filter operation to select the cells sure and uncertain outlier cells 
     outlierCells = cells_counts.map(region_counts7).filter(lambda x: x[1] <= M).collectAsMap()
     uncertainCells = cells_counts.map(region_counts3).filter(lambda x: x[1] <= M and x[0] not in outlierCells).collectAsMap()
 
     # Count sure outliers and uncertain points
     outlierPoints = inputPoints.filter(lambda x: (int(math.floor(x[0] / omega)), int(math.floor(x[1] / omega))) in outlierCells).count()
     uncertainPoints = inputPoints.filter(lambda x: (int(math.floor(x[0] / omega)), int(math.floor(x[1] / omega))) in uncertainCells).count()
-     
+
     print("Number of sure outliers =", outlierPoints,"\nNumber of uncertain points =",uncertainPoints )
 
     # Running time
@@ -80,75 +76,87 @@ def MRApproxOutliers(inputPoints, D, M):
     print("Running time of MRApproxOutliers =", running_time_ms, "ms")
     return outlierPoints
 
-# Now wants a list as input
-def SequentialFFT(P,K):
-    #listP = [element for element in P] # Changed name because list is a python keyword
-    C = [rand.choice(P)] # we choose the first center randomly, C is set of centers
-    while len(C) < K:
-        # we calculate the farthest point from the existing centers
-        # Fixed an issue here, we should check for new centers in P-C , not in P as before
-        farthest_point = max((point for point in P if point not in C), key=lambda point: min(math.dist(point, center) for center in C))
-        # we add the farthest point to the centers list
-        C.append(farthest_point)
-    return C
 
+"""
+MRFFT
+"""
+def SequentialFFT(P, K):
+    rand.seed(42)
+    centers = [tuple(rand.choice(P))]
+    remaining_points = set(tuple(point) for point in P if point not in centers)
+    while len(centers) < K:
+        farthest_point = max(remaining_points, key=lambda p: min(math.dist(p, c) for c in centers) )
+        remaining_points.remove(farthest_point)
+        centers.append(farthest_point)
+    return [list(center) for center in centers]
 
 
 
 def MRFFT(P, K):
-    print("Starting MRFFT...")
-    partitions = P.repartition(10)
-    print("----------------- ROUND 1 -----------------\n")
-    centers_per_partition = partitions.mapPartitions(lambda partition: SequentialFFT(list(partition), K))
-    print("Centers per partition: ", centers_per_partition.collect(), "\n")
+    # ROUND 1
+    st = time.time()
     
-    print("----------------- ROUND 2 -----------------\n")
-    C = SequentialFFT(centers_per_partition.collect(), K) # C is the set of centers
-    print("Centers: ", C, "\n")
+    centers_per_partition = P.mapPartitions(lambda partition: SequentialFFT(list(partition), K))
+    centers_per_partition_count = centers_per_partition.count()
+    centers_per_partition.cache()
+    
+    et = time.time()
+    print(f"Running time of MRFFT Round 1 = {int((et - st) * 1000)} ms")
+    
+    # ROUND 2
+    st = time.time()
+    
+    aggregated_centers = centers_per_partition.collect()
+    C = SequentialFFT(aggregated_centers, K) # run SequentialFFT again to get the final set of centers
+    
+    et = time.time()
+    print(f"Running time of MRFFT Round 2 = {int((et - st) * 1000)} ms")
 
-    print("----------------- ROUND 3 -----------------\n")
+    # ROUND 3
+    st = time.time()
+    
     context = SparkContext.getOrCreate()
     broadcast_C = context.broadcast(C)
-    print(f"broad ={broadcast_C.value}")
-
-    points_2_distances = P.map(lambda point: min(math.dist(point, center) for center in broadcast_C.value))
-    print("Distances: ", points_2_distances.collect(), "\n")
-    FarthestPoint = points_2_distances.reduce(lambda x, y: max(x, y))
-    print("Radius: ", FarthestPoint, "\n")
+    FarthestPoint = P.map(lambda point: min(math.dist(point, center) for center in broadcast_C.value)).reduce(max)
     
+    et = time.time()
+    print(f"Running time of MRFFT Round 3 = {int((et - st) * 1000)} ms")
+    
+    print(f"Radius = {FarthestPoint}")
     return FarthestPoint
 
+
+"""
+main
+"""
 def main():
-    print("Starting...")
-    conf = SparkConf().setMaster("local").setAppName('G064HW2')
+    # spark setup
+    conf = SparkConf().setAppName('G064HW2')
+    conf.set("spark.locality.wait", "0s");
     sc = SparkContext(conf=conf)
+    sc.setLogLevel("WARN")
 
-    # CHECKING NUMBER OF CMD LINE PARAMETERS
-    assert len(sys.argv) == 5, "Usage: python G064HW2.py <file_name> <D> <M> <L>"
-
-
-    global data_path,M,K,L
+    # check and process command line args
+    assert len(sys.argv) == 5, "Usage: python G064HW2.py <file_name> <M> <K> <L>"
     
-    
-    # Parse command-line arguments
     data_path = sys.argv[1]
-    M = float(sys.argv[2])
+    M = int(sys.argv[2])
     K = int(sys.argv[3])
     L = int(sys.argv[4])
 
+    # print command line args
     print(f"{data_path} M={M} K={K} L={L}")
     
+    # read data
     rawData = sc.textFile(data_path).repartition(numPartitions=L)
     inputPoints = rawData.map(lambda line: [float(i) for i in line.split(",")])
     
-    print("Number of points =",inputPoints.count())
-
-    #P = inputPoints.collect()
-
-    D = MRFFT(inputPoints,K)
-
-    MRApproxOutliers(inputPoints,D,M)
+    inputPoints.cache()
     
+    print(f"Number of points = {inputPoints.count()}")
+
+    D = MRFFT(inputPoints, K)
+    MRApproxOutliers(inputPoints, D, M)
 
 if __name__ == "__main__":
 	main()

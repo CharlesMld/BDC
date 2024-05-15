@@ -6,30 +6,37 @@ import time
 # Now wants a list as input
 def SequentialFFT(P, K):
     rand.seed(42)
-    centers = [tuple(rand.choice(P))]
-    remaining_points = set(tuple(point) for point in P if point not in centers)
+    centers = [rand.choice(P)]
+    remaining_points = [point for point in P if point not in centers]
     while len(centers) < K:
         farthest_point = max(remaining_points, key=lambda p: min(math.dist(p, c) for c in centers) )
         remaining_points.remove(farthest_point)
         centers.append(farthest_point)
-    return [list(center) for center in centers]
+    return centers
 
-def FarthestPoint(P, centers):
-    list = [element for element in P]
-    farthestpoints = [max(list, key=lambda point: min(math.dist(point, center) for center in centers))]
-    return farthestpoints
 
 
 
 def MRFFT(P, K):
     print("Starting MRFFT...")
-    partitions = P.repartition(10)
+    partitions = P.repartition(2)
     print("----------------- ROUND 1 -----------------\n")
+    
     centers_per_partition = partitions.mapPartitions(lambda partition: SequentialFFT(list(partition), K))
-    print("Centers per partition: ", centers_per_partition.collect(), "\n")
+    
+    #print("Centers per partition: ", centers_per_partition.collect(), "\n")
     
     print("----------------- ROUND 2 -----------------\n")
-    C = SequentialFFT(centers_per_partition.collect(), K) # C is the set of centers
+    
+    centers_per_partition_count = centers_per_partition.count()
+    centers_per_partition.cache()
+    start_time = time.time()
+    gathered_centers = centers_per_partition.collect()
+    
+    C = SequentialFFT(gathered_centers, K) # C is the set of centers
+    end_time = time.time()
+    running_time_ms = ((end_time - start_time) )
+    print("Running time of MRApproxOutliers =", running_time_ms, "ms")
     print("Centers: ", C, "\n")
 
     print("----------------- ROUND 3 -----------------\n")
@@ -38,7 +45,7 @@ def MRFFT(P, K):
     print(f"broad ={broadcast_C.value}")
 
     points_2_distances = P.map(lambda point: min(math.dist(point, center) for center in broadcast_C.value))
-    print("Distances: ", points_2_distances.collect(), "\n")
+    #print("Distances: ", points_2_distances.collect(), "\n")
     FarthestPoint = points_2_distances.reduce(lambda x, y: max(x, y))
     print("Radius: ", FarthestPoint, "\n")
 
@@ -67,7 +74,7 @@ def main():
     sc = SparkContext(conf=conf)
     print(f"app name sc = {sc.appName}")
     print(f"config sc = {sc.getConf}")
-    rawData = sc.textFile("input.txt")
+    rawData = sc.textFile("artificial1M_9_100.csv")
     inputPoints = rawData.map(lambda line: [float(i) for i in line.split(",")])
     MRFFT(inputPoints, 3)
     
