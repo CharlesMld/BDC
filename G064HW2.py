@@ -122,7 +122,7 @@ def MRFFT(P, K):
     et = time.time()
     print(f"Running time of MRFFT Round 3 = {int((et - st) * 1000)} ms")
     
-    print(f"Radius = {FarthestPoint}")
+    print(f"Radius = {round(FarthestPoint,8)}")
     return FarthestPoint
 
 
