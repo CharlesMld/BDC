@@ -80,43 +80,31 @@ def MRApproxOutliers(inputPoints, D, M):
 """
 MRFFT
 """
-def find_duplicate_points(point_list):
-    # Create an empty dictionary to store the counts of each point
-    point_list = [tuple(point) for point in point_list]
-    point_counts = {}
 
-    # Iterate through the list of points and count occurrences
-    for point in point_list:
-        if point in point_counts:
-            point_counts[point] += 1
-        else:
-            point_counts[point] = 1
-
-    # Filter points that have count greater than 1 (i.e., duplicates)
-    duplicate_points = [(point,count) for point, count in point_counts.items() if count > 1]
-
-    return duplicate_points
 
 def SequentialFFT(P, K):
     rand.seed(42)
-    centers = [rand.choice(P)]
-    distances = [[i, math.dist(point, centers[0])] for i, point in enumerate(P)]
 
-    while len(centers) < K:
+    # Set of centers C
+    C = [rand.choice(P)]
+    # Initialize the set of distances
+    distances = [[i, math.dist(point, C[0])] for i, point in enumerate(P)]
+
+    while len(C) < K:
         # Find the farthest point
         farthest_point_index, _ = max(distances, key=lambda x: x[1])
         farthest_point = P[farthest_point_index]
         
         # Update distances for the newly added center
         for i, point in enumerate(P):
-            if point not in centers:
+            if point not in C:
                 distances[i][1] = min(distances[i][1], math.dist(point, farthest_point))
             else:
                 pass
 
-        centers.append(farthest_point)
+        C.append(farthest_point)
             
-    return centers
+    return C
 
 
 
@@ -132,25 +120,25 @@ def MRFFT(P, K):
     print(f"Running time of MRFFT Round 1 = {int((et - st) * 1000)} ms")
     
     # ROUND 2
-    
     st = time.time()
+
     aggregated_centers = centers_per_partition.collect()
-    
-    
+    # Run SequentialFFT on the coreset to get the final set of centers
     C = SequentialFFT(aggregated_centers, K)
-    print(f"centers={C}") # run SequentialFFT again to get the final set of centers
+    print(f"centers={C}") 
     
     et = time.time()
     print(f"Running time of MRFFT Round 2 = {int((et - st) * 1000)} ms")
 
     # ROUND 3
     st = time.time()
-    
+
+    # Copy set of centers in a broadcast variable
     context = SparkContext.getOrCreate()
     broadcast_C = context.broadcast(C)
     #Compute radius
     R = P.mapPartitions(lambda partition: [min(math.dist(point, center) for center in broadcast_C.value) for point in partition]).reduce(lambda x,y: max(x,y))
-    #FarthestPoint = P.map(lambda point: min(math.dist(point, center) for center in broadcast_C.value)).reduce(max)
+    
     et = time.time()
     print(f"Running time of MRFFT Round 3 = {int((et - st) * 1000)} ms")
     
@@ -183,14 +171,12 @@ def main():
     rawData = sc.textFile(data_path).repartition(numPartitions=L)
     inputPoints = rawData.map(lambda line: [float(i) for i in line.split(",")])
     
-    #inputPoints.cache()
-    #input = inputPoints.collect()
+    
     print(f"Number of points = {inputPoints.count()}")
 
     D = MRFFT(inputPoints, K)
     MRApproxOutliers(inputPoints, D, M)
-    #dup = find_duplicate_points(input)
-    #print(f"dup={len(dup)}")
+    
 
 if __name__ == "__main__":
 	main()
