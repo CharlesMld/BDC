@@ -132,9 +132,11 @@ def MRFFT(P, K):
     print(f"Running time of MRFFT Round 1 = {int((et - st) * 1000)} ms")
     
     # ROUND 2
-    st = time.time()
     
+    st = time.time()
     aggregated_centers = centers_per_partition.collect()
+    
+    
     C = SequentialFFT(aggregated_centers, K)
     print(f"centers={C}") # run SequentialFFT again to get the final set of centers
     
@@ -146,8 +148,8 @@ def MRFFT(P, K):
     
     context = SparkContext.getOrCreate()
     broadcast_C = context.broadcast(C)
-    FarthestPoint = P.map(lambda point: min(math.dist(point, center) for center in broadcast_C.value)).reduce(max)
-    
+    FarthestPoint = P.mapPartitions(lambda partition: [min(math.dist(point, center) for center in broadcast_C.value) for point in partition]).reduce(lambda x,y: max(x,y))
+    #FarthestPoint = P.map(lambda point: min(math.dist(point, center) for center in broadcast_C.value)).reduce(max)
     et = time.time()
     print(f"Running time of MRFFT Round 3 = {int((et - st) * 1000)} ms")
     
