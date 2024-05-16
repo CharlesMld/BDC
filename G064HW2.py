@@ -93,14 +93,14 @@ def find_duplicate_points(point_list):
             point_counts[point] = 1
 
     # Filter points that have count greater than 1 (i.e., duplicates)
-    duplicate_points = [point for point, count in point_counts.items() if count > 1]
+    duplicate_points = [(point,count) for point, count in point_counts.items() if count > 1]
 
     return duplicate_points
 
 def SequentialFFT(P, K):
     rand.seed(42)
     centers = [rand.choice(P)]
-    distances = [(i, math.dist(point, centers[0])) for i, point in enumerate(P)]
+    distances = [[i, math.dist(point, centers[0])] for i, point in enumerate(P)]
 
     while len(centers) < K:
         # Find the farthest point
@@ -108,15 +108,12 @@ def SequentialFFT(P, K):
         farthest_point = P[farthest_point_index]
         
         # Update distances for the newly added center
-        updated_distances = []
         for i, point in enumerate(P):
             if point not in centers:
-                distance_to_new_center = min(distances[i][1], math.dist(point, farthest_point))
-                updated_distances.append((i, distance_to_new_center))
+                distances[i][1] = min(distances[i][1], math.dist(point, farthest_point))
             else:
-                updated_distances.append(distances[i])
+                pass
 
-        distances = updated_distances
         centers.append(farthest_point)
             
     return centers
@@ -127,8 +124,8 @@ def MRFFT(P, K):
     # ROUND 1
     st = time.time()
     
-    centers_per_partition = P.mapPartitions(lambda partition: SequentialFFT(list(partition), K))
-    centers_per_partition_count = centers_per_partition.count()
+    centers_per_partition = P.mapPartitions(lambda partition: SequentialFFT(list(partition),K))
+    centers_count = centers_per_partition.count()
     centers_per_partition.cache()
     
     et = time.time()
@@ -184,13 +181,13 @@ def main():
     inputPoints = rawData.map(lambda line: [float(i) for i in line.split(",")])
     
     #inputPoints.cache()
-    input = inputPoints.collect()
+    #input = inputPoints.collect()
     print(f"Number of points = {inputPoints.count()}")
 
     D = MRFFT(inputPoints, K)
     MRApproxOutliers(inputPoints, D, M)
     #dup = find_duplicate_points(input)
-    #print(f"dup={dup}")
+    #print(f"dup={len(dup)}")
 
 if __name__ == "__main__":
 	main()
