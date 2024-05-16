@@ -148,13 +148,14 @@ def MRFFT(P, K):
     
     context = SparkContext.getOrCreate()
     broadcast_C = context.broadcast(C)
-    FarthestPoint = P.mapPartitions(lambda partition: [min(math.dist(point, center) for center in broadcast_C.value) for point in partition]).reduce(lambda x,y: max(x,y))
+    #Compute radius
+    R = P.mapPartitions(lambda partition: [min(math.dist(point, center) for center in broadcast_C.value) for point in partition]).reduce(lambda x,y: max(x,y))
     #FarthestPoint = P.map(lambda point: min(math.dist(point, center) for center in broadcast_C.value)).reduce(max)
     et = time.time()
     print(f"Running time of MRFFT Round 3 = {int((et - st) * 1000)} ms")
     
-    print(f"Radius = {round(FarthestPoint,8)}")
-    return FarthestPoint
+    print(f"Radius = {round(R,8)}")
+    return R
 
 
 """
