@@ -125,7 +125,7 @@ def MRFFT(P, K):
     aggregated_centers = centers_per_partition.collect()
     # Run SequentialFFT on the coreset to get the final set of centers
     C = SequentialFFT(aggregated_centers, K)
-    print(f"centers={C}") 
+     
     
     et = time.time()
     print(f"Running time of MRFFT Round 2 = {int((et - st) * 1000)} ms")
