@@ -137,7 +137,7 @@ if __name__ == '__main__':
 
     # COMPUTE AND PRINT FINAL STATISTICS
     print("Number of items processed =", streamLength[0])
-    print("Number of distinct items =", len(S))
+    print("Number of frequent items =", len(S))
     largest_item = max(S.keys())
     print("Largest item =", largest_item)
     

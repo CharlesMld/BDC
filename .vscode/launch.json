@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["8886","100000"]
+            "args": ["8886","10000"]
         },
         {
             "name": "StickySampling",
@@ -18,7 +18,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["8886","100000","0.1","0.03","0.001"]
+            "args": ["8886","10000","0.1","0.01","0.001"]
         }
     ]
 }
