@@ -5,12 +5,20 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Debugger: Current File with Arguments",
+            "name": "DistinctItemsExample",
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["8886","10000"]
+            "args": ["8886","100000"]
+        },
+        {
+            "name": "StickySampling",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": ["8886","100000","0.1","0.03","0.001"]
         }
     ]
 }

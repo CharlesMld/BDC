@@ -3,39 +3,69 @@ from pyspark.streaming import StreamingContext
 from pyspark import StorageLevel
 import threading
 import sys
+import math 
+import random as rand
 
 # After how many items should we stop?
 THRESHOLD = -1 # To be set via command line
 
 
 # Operations to perform after receiving an RDD 'batch' at time 'time'
-def process_batch(time, batch):
-    # We are working on the batch at time `time`.
-    global streamLength, histogram
+def stickySampling(time,batch):
+    # Useful vars
+    global streamLength,S,phi,epsilon,delta
     batch_size = batch.count()
-    # If we already have enough points (> THRESHOLD), skip this batch.
-    if streamLength[0]>=THRESHOLD:
+
+    # Stop the function
+    if streamLength[0] >= THRESHOLD:
         return
+    # Increment stream length
     streamLength[0] += batch_size
-    # Extract the distinct items from the batch
-    batch_items = batch.map(lambda s: (int(s), 1)).reduceByKey(lambda i1, i2: 1).collectAsMap()
+    
 
-    # Update the streaming state
+    '''Algorithm implementation'''
+    # Setting sampling rate
+    expr = 1/(delta*phi)
+    r = (math.log(expr))/(epsilon)
+    s_rate = r/THRESHOLD
+
+    # I need key value pairs but
+    # I should not doo this initialization
+    # The stream should be processed as it comes
+    batch_items = batch.map(lambda x: (int(x) , 1)).collectAsMap()
+
     for key in batch_items:
-        if key not in histogram:
-            histogram[key] = 1
-            
-    # If we wanted, here we could run some additional code on the global histogram
-    if batch_size > 0:
-        print("Batch size at time [{0}] is: {1}".format(time, batch_size))
+        if key in S:
+            S[key] += S.get(key,0)
+        else:
+            p = rand.random()
+            if (p <= s_rate):
+                S[key] = 1
 
+    # Print the frequent items
+    approx_frequent_items = []
+    for key in S:
+        if S.get(key) >= ((phi - epsilon)*THRESHOLD):
+            approx_frequent_items.append(key)
+        
+
+    # Stop the stream
     if streamLength[0] >= THRESHOLD:
         stopping_condition.set()
+
+
+
+
+
+
+
+
+    
         
 
 
 if __name__ == '__main__':
-    assert len(sys.argv) == 3, "USAGE: port, threshold"
+    assert len(sys.argv) == 6, "USAGE: port, threshold,phi,epsilon,delta,"
 
     # IMPORTANT: when running locally, it is *fundamental* that the
     # `master` setting is "local[*]" or "local[n]" with n > 1, otherwise
@@ -77,21 +107,23 @@ if __name__ == '__main__':
     
     THRESHOLD = int(sys.argv[2])
     print("Threshold = ", THRESHOLD)
+
+    phi = float(sys.argv[3])
+    epsilon = float(sys.argv[4])
+    delta = float(sys.argv[5])
         
     # &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     # DEFINING THE REQUIRED DATA STRUCTURES TO MAINTAIN THE STATE OF THE STREAM
     # &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
     streamLength = [0] # Stream length (an array to be passed by reference)
-    histogram = {} # Hash Table for the distinct elements
+    S = {} # Hash Table for the distinct elements
     
 
     # CODE TO PROCESS AN UNBOUNDED STREAM OF DATA IN BATCHES
     stream = ssc.socketTextStream("algo.dei.unipd.it", portExp, StorageLevel.MEMORY_AND_DISK)
-    # For each batch, to the following.
-    # BEWARE: the `foreachRDD` method has "at least once semantics", meaning
-    # that the same data might be processed multiple times in case of failure.
-    stream.foreachRDD(lambda time, batch: process_batch(time, batch))
+    
+    stream.foreachRDD(lambda time, batch: stickySampling(time, batch))
     
     # MANAGING STREAMING SPARK CONTEXT
     print("Starting streaming engine")
@@ -99,16 +131,13 @@ if __name__ == '__main__':
     print("Waiting for shutdown condition")
     stopping_condition.wait()
     print("Stopping the streaming engine")
-    # NOTE: You will see some data being processed even after the
-    # shutdown command has been issued: This is because we are asking
-    # to stop "gracefully", meaning that any outstanding work
-    # will be done.
+
     ssc.stop(False, True) # False = Stop streaming context but not sparkContext; True = stopGracefully
     print("Streaming engine stopped")
 
     # COMPUTE AND PRINT FINAL STATISTICS
     print("Number of items processed =", streamLength[0])
-    print("Number of distinct items =", len(histogram))
-    largest_item = max(histogram.keys())
+    print("Number of distinct items =", len(S))
+    largest_item = max(S.keys())
     print("Largest item =", largest_item)
     
