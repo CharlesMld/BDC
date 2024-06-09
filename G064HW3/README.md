@@ -1,3 +1,8 @@
+# Group notes
+The *threshold* parameter refers to the number of elements after which we should stop the streaming. Therefore, we notice that if we define *threshold* $<$ minimum batch size, the program will be forced to process 1 entire batch which is 360 elements. The same if we set *threshold*=361, the program will be forced to process 2 batches $\Rightarrow$ 720 elements
+
+
+# Official assignment
 In this homework, you will use the Spark Streaming API to devise a program which processes a stream of items and compares the effectiveness of two methods to identify frequent items: 
 1. the method based on reservoir sampling
 2. the method based on sticky sampling
