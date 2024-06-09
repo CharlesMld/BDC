@@ -9,7 +9,6 @@ import random as rand
 # After how many items should we stop?
 THRESHOLD = -1 # To be set via command line
 
-
 # Operations to perform after receiving an RDD 'batch' at time 'time'
 def stickySampling(time,batch):
     # Useful vars
@@ -47,7 +46,6 @@ def stickySampling(time,batch):
     for key in S:
         if S.get(key) >= ((phi - epsilon)*THRESHOLD):
             approx_frequent_items.append(key)
-        
 
     # Stop the stream
     if streamLength[0] >= THRESHOLD:
