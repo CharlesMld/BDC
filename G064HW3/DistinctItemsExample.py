@@ -7,10 +7,10 @@ import random
 
 # After how many items should we stop?
 THRESHOLD = -1 # To be set via command line
+reservoir = []
 
 def reservoir_sampling(stream, m):
     # Initializing the reservoir with the first m elements from the stream
-    reservoir = []
     for i in range(m):
         reservoir.append(stream[i])
     print(f"Initial reservoir : ", reservoir)
@@ -27,7 +27,7 @@ def reservoir_sampling(stream, m):
 # Operations to perform after receiving an RDD 'batch' at time 'time'
 def process_batch(time, batch):
     # We are working on the batch at time `time`.
-    global streamLength, histogram, reservoir
+    global streamLength, histogram
     batch_size = batch.count()
     # If we already have enough points (> THRESHOLD), skip this batch.
     if streamLength[0]>=THRESHOLD:
@@ -132,4 +132,3 @@ if __name__ == '__main__':
     print("Final sample of 20 items by Reservoir Sampling: ", reservoir)
     largest_item = max(histogram.keys())
     print("Largest item =", largest_item)
-    
