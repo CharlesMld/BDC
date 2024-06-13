@@ -6,10 +6,10 @@ import sys
 import random
 
 # After how many items should we stop?
-THRESHOLD = -1 # To be set via command line
-reservoir = []
+n = -1 # To be set via command line
 
 def reservoir_sampling(stream, m):
+    reservoir=[]
     # Initializing the reservoir with the first m elements from the stream
     for i in range(m):
         reservoir.append(stream[i])
@@ -27,10 +27,10 @@ def reservoir_sampling(stream, m):
 # Operations to perform after receiving an RDD 'batch' at time 'time'
 def process_batch(time, batch):
     # We are working on the batch at time `time`.
-    global streamLength, histogram
+    global streamLength, histogram, all_elements
     batch_size = batch.count()
-    # If we already have enough points (> THRESHOLD), skip this batch.
-    if streamLength[0]>=THRESHOLD:
+    # If we already have enough points (> n), skip this batch.
+    if streamLength[0]>=n:
         return
     streamLength[0] += batch_size
     # Extract the distinct items from the batch
@@ -46,16 +46,17 @@ def process_batch(time, batch):
         print("Batch size at time [{0}] is: {1}".format(time, batch_size))
         batchList = batch.collect()
         batchList = [int(x) for x in batchList]
-        print("Int batch list : ", batchList)
-        reservoir = reservoir_sampling(batchList, 20)
+        all_elements.extend(batchList)
+        # print("Int batch list : ", batchList)
+        # reservoir = reservoir_sampling(batchList, 20)
 
-    if streamLength[0] >= THRESHOLD:
+    if streamLength[0] >= n:
         stopping_condition.set()
         
 
 
 if __name__ == '__main__':
-    assert len(sys.argv) == 3, "USAGE: port, threshold"
+    assert len(sys.argv) == 6, "USAGE: port, n ,phi, epsilon, delta"
 
     # IMPORTANT: when running locally, it is *fundamental* that the
     # `master` setting is "local[*]" or "local[n]" with n > 1, otherwise
@@ -95,8 +96,17 @@ if __name__ == '__main__':
     portExp = int(sys.argv[1])
     print("Receiving data from port =", portExp)
     
-    THRESHOLD = int(sys.argv[2])
-    print("Threshold = ", THRESHOLD)
+    n = int(sys.argv[2])
+    print("n = ", n)
+
+    phi = float(sys.argv[3])
+    print("phi = ", phi)
+
+    epsilon = int(sys.argv[4])
+    print("epsilon = ", epsilon)
+
+    delta = int(sys.argv[5])
+    print("delta = ", delta)
         
     # &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     # DEFINING THE REQUIRED DATA STRUCTURES TO MAINTAIN THE STATE OF THE STREAM
@@ -104,7 +114,7 @@ if __name__ == '__main__':
 
     streamLength = [0] # Stream length (an array to be passed by reference)
     histogram = {} # Hash Table for the distinct elements
-    
+    all_elements = [] # List to store all the elements of the stream
 
     # CODE TO PROCESS AN UNBOUNDED STREAM OF DATA IN BATCHES
     stream = ssc.socketTextStream("algo.dei.unipd.it", portExp, StorageLevel.MEMORY_AND_DISK)
@@ -129,6 +139,10 @@ if __name__ == '__main__':
     # COMPUTE AND PRINT FINAL STATISTICS
     print("Number of items processed =", streamLength[0])
     print("Number of distinct items =", len(histogram))
-    print("Final sample of 20 items by Reservoir Sampling: ", reservoir)
+    print("Since we only wanted ", n, "elements to be processed, let's reduce a bit the stream")
+    print("All the stream has been stored in the list stream of ", len(all_elements), " elements")
+    all_elements = all_elements[:n]
+    print("Reduced stream to ", len(all_elements), " elements")
+    print("Final sample of 100 items by Reservoir Sampling: ", reservoir_sampling(all_elements, int(1/phi)))
     largest_item = max(histogram.keys())
     print("Largest item =", largest_item)

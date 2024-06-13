@@ -88,11 +88,11 @@ if __name__ == '__main__':
     stream.foreachRDD(lambda batch: stickySampling(batch))
 
     # MANAGING STREAMING SPARK CONTEXT
-        print("Starting streaming engine")
-        ssc.start()
-        print("Waiting for shutdown condition")
-        stopping_condition.wait()
-        print("Stopping the streaming engine")
+    print("Starting streaming engine")
+    ssc.start()
+    print("Waiting for shutdown condition")
+    stopping_condition.wait()
+    print("Stopping the streaming engine")
 
     ssc.stop(False, False)  # False = Stop streaming context but not sparkContext; True = stopGracefully
     print("Streaming engine stopped")
