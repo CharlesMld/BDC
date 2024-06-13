@@ -3,10 +3,26 @@ from pyspark.streaming import StreamingContext
 from pyspark import StorageLevel
 import threading
 import sys
+import random
 
 # After how many items should we stop?
 THRESHOLD = -1 # To be set via command line
+reservoir = []
 
+def reservoir_sampling(stream, m):
+    # Initializing the reservoir with the first m elements from the stream
+    for i in range(m):
+        reservoir.append(stream[i])
+    print(f"Initial reservoir : ", reservoir)
+    print("\nProcessing the rest of the stream:\n")
+    for i in range(m, len(stream)):
+        # random index in range [0, i]
+        j = random.randint(0, i)
+        # If random index within range of the reservoir size, replace the element j-th element
+        if j < m:
+            print(f"Element {stream[i]} at index {i} replaces reservoir element at index {j} ({reservoir[j]})")
+            reservoir[j] = stream[i]
+    return reservoir
 
 # Operations to perform after receiving an RDD 'batch' at time 'time'
 def process_batch(time, batch):
@@ -28,6 +44,10 @@ def process_batch(time, batch):
     # If we wanted, here we could run some additional code on the global histogram
     if batch_size > 0:
         print("Batch size at time [{0}] is: {1}".format(time, batch_size))
+        batchList = batch.collect()
+        batchList = [int(x) for x in batchList]
+        print("Int batch list : ", batchList)
+        reservoir = reservoir_sampling(batchList, 20)
 
     if streamLength[0] >= THRESHOLD:
         stopping_condition.set()
@@ -109,6 +129,6 @@ if __name__ == '__main__':
     # COMPUTE AND PRINT FINAL STATISTICS
     print("Number of items processed =", streamLength[0])
     print("Number of distinct items =", len(histogram))
+    print("Final sample of 20 items by Reservoir Sampling: ", reservoir)
     largest_item = max(histogram.keys())
     print("Largest item =", largest_item)
-    
