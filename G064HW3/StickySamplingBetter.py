@@ -38,17 +38,7 @@ def stickySampling(batch):
             if p <= s_rate:
                 sample[item_int] = 1
 
-    # Update global Sample
-    '''
-    for key, value in local_S.items():
-        if key in sample:
-            sample[key] += value
-        else:
-            sample[key] = value
-    '''
 
-    print("Length", streamLength[0])
-    print(f"currentS={sample}")
 
     # Stop the stream
     if streamLength[0] >= THRESHOLD:

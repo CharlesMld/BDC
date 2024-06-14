@@ -9,6 +9,8 @@ import random
 THRESHOLD = -1 # To be set via command line
 reservoir = []
 
+
+
 def reservoir_sampling(stream, m):
     # Initializing the reservoir with the first m elements from the stream
     for i in range(m):
@@ -27,31 +29,38 @@ def reservoir_sampling(stream, m):
 # Operations to perform after receiving an RDD 'batch' at time 'time'
 def process_batch(time, batch):
     # We are working on the batch at time `time`.
-    global streamLength, histogram
+    #global streamLength, histogram
     batch_size = batch.count()
     # If we already have enough points (> THRESHOLD), skip this batch.
     if streamLength[0]>=THRESHOLD:
         return
     streamLength[0] += batch_size
-    # Extract the distinct items from the batch
-    batch_items = batch.map(lambda s: (int(s), 1)).reduceByKey(lambda i1, i2: 1).collectAsMap()
+    # Extract the distinct items from the batch and count the occurrences in the batch
+                                                                                         
+    batch_items = batch.map(lambda s: (int(s), 1)).reduceByKey(lambda a, b: a + b).collect()                                                                                           
 
-    # Update the streaming state
-    for key in batch_items:
+     # Update the streaming state
+    for key, count in batch_items:
         if key not in histogram:
-            histogram[key] = 1
+            histogram[key] = count
+        else:
+            histogram[key] += count
+
+    
             
     # If we wanted, here we could run some additional code on the global histogram
     if batch_size > 0:
         print("Batch size at time [{0}] is: {1}".format(time, batch_size))
-        batchList = batch.collect()
-        batchList = [int(x) for x in batchList]
-        print("Int batch list : ", batchList)
-        reservoir = reservoir_sampling(batchList, 20)
+        #batchList = batch.collect()
+        #batchList = [int(x) for x in batchList]
+        #print("Int batch list : ", batchList)
+        #reservoir = reservoir_sampling(batchList, 20)
 
     if streamLength[0] >= THRESHOLD:
         stopping_condition.set()
-        
+
+
+
 
 
 if __name__ == '__main__':
@@ -101,7 +110,9 @@ if __name__ == '__main__':
     # &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     # DEFINING THE REQUIRED DATA STRUCTURES TO MAINTAIN THE STATE OF THE STREAM
     # &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-
+    
+    #global histogram , streamLength
+    phi = 0.07
     streamLength = [0] # Stream length (an array to be passed by reference)
     histogram = {} # Hash Table for the distinct elements
     
@@ -126,9 +137,16 @@ if __name__ == '__main__':
     ssc.stop(False, True) # False = Stop streaming context but not sparkContext; True = stopGracefully
     print("Streaming engine stopped")
 
+    # Exact frequent items
+    #counts = compute_counts(histogram)
+
     # COMPUTE AND PRINT FINAL STATISTICS
     print("Number of items processed =", streamLength[0])
-    print("Number of distinct items =", len(histogram))
-    print("Final sample of 20 items by Reservoir Sampling: ", reservoir)
-    largest_item = max(histogram.keys())
-    print("Largest item =", largest_item)
+    #print("Number of distinct items =", len(histogram))
+    #print("Final sample of 20 items by Reservoir Sampling: ", reservoir)
+    
+    print("Number of items in histogram =", len(histogram))
+    # Select items with count greater than phi
+    freq = phi*THRESHOLD  # Example threshold
+    true_frequent_items = {key: histogram[key] for key in histogram if histogram[key] > freq}
+    print(f"True frequent items {freq}:", true_frequent_items) 

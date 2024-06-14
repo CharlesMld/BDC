@@ -9,6 +9,11 @@ import random as rand
 # After how many items should we stop?
 THRESHOLD = -1  # To be set via command line
 
+
+
+
+
+
 # Operations to perform after receiving an RDD 'batch' at time 'time'
 def stickySampling(batch):
     global streamLength, sample, phi, epsilon, delta, stopping_condition
@@ -37,15 +42,6 @@ def stickySampling(batch):
         else:
             if p <= s_rate:
                 sample[item_int] = 1
-
-    # Update global Sample
-    '''
-    for key, value in local_S.items():
-        if key in sample:
-            sample[key] += value
-        else:
-            sample[key] = value
-    '''
 
     print("Length", streamLength[0])
     print(f"currentS={sample}")
@@ -88,11 +84,11 @@ if __name__ == '__main__':
     stream.foreachRDD(lambda batch: stickySampling(batch))
 
     # MANAGING STREAMING SPARK CONTEXT
-        print("Starting streaming engine")
-        ssc.start()
-        print("Waiting for shutdown condition")
-        stopping_condition.wait()
-        print("Stopping the streaming engine")
+    print("Starting streaming engine")
+    ssc.start()
+    print("Waiting for shutdown condition")
+    stopping_condition.wait()
+    print("Stopping the streaming engine")
 
     ssc.stop(False, False)  # False = Stop streaming context but not sparkContext; True = stopGracefully
     print("Streaming engine stopped")
