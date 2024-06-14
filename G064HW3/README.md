@@ -29,16 +29,16 @@ In order to see a concrete application of the above setting you can download and
 
 You must write a program **GxxxHW3.java** (for Java users) or **GxxxHW3.py** (for Python users), where xxx is your 3-digit group number (e.g., 004 or 045), which receives in input the following **5 command-line arguments (in the given order):**  
 
-- **An integer** n𝑛: the number of items of the stream to be processed
-- **A float** _phi_: the frequency thresold in (0,1)(0,1)  
-- **A float** _epsilon_: the accuracy parameter in (0,1)(0,1)
-- **A float** _delta_: the confidence parameter in (0,1)(0,1)  
+- **An integer** n: the number of items of the stream to be processed
+- **A float** _$\phi$_: the frequency thresold in [0,1] 
+- **A float** $\epsilon$: the accuracy parameter in [0,1]
+- **A float** $\delta$: the confidence parameter in [0,1]
 - **An integer** _portExp_: the port number  
 
 The program must process all items in the batches up to and including the first batch which contains the n-th item of the stream Σ emitted by **machine algo.dei.unipd.it** at port _portExp_, and it must compute the following information:
 
 - The true frequent items with respect to the threshold _phi_
-- An _m_-**sample** of ΣΣ using **Reservoir Sampling** of, with m𝑚 = ⌈1/phi⌉⌈1/𝑝ℎ𝑖⌉  
+- An _m_-sample of $\Sigma$ using **Reservoir Sampling** with m = ⌈1/$\phi$⌉
 - The **_epsilon_-Approximate Frequent Items** computed using **Sticky Sampling** with confidence parameter _delta_
 
 If some action must be performed with a probability p, generate a random number in x$\in$[0,1] and perform the action only if $x\leq p$. Use the random generators provided by Python.  
