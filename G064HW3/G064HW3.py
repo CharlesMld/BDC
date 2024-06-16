@@ -15,14 +15,13 @@ def reservoir_sampling(stream, m):
     # Initializing the reservoir with the first m elements from the stream
     for i in range(m):
         reservoir.append(stream[i])
-    print(f"Initial reservoir : ", reservoir)
-    print("\nProcessing the rest of the stream:\n")
+    # print(f"Initial reservoir : ", reservoir)
+    # print("\nProcessing the rest of the stream:\n")
     for i in range(m, len(stream)):
         # random index in range [0, i]
         j = rand.randint(0, i)
         # If random index within range of the reservoir size, replace the element j-th element
         if j < m:
-            print(f"Element {stream[i]} at index {i} replaces reservoir element at index {j} ({reservoir[j]})")
             reservoir[j] = stream[i]
     return reservoir
 
@@ -109,18 +108,17 @@ def process_batch(time, batch):
             
     # If we wanted, here we could run some additional code on the global histogram
     if batch_size > 0:
-        #print("Batch size at time [{0}] is: {1}".format(time, batch_size))
+        # print("Batch size at time [{0}] is: {1}".format(time, batch_size))
         batchList = batch.collect()
         batchList = [int(x) for x in batchList]
         all_elements.extend(batchList)
         
         
-
     if streamLength[0] >= n:
         stopping_condition.set()
 
 if __name__ == '__main__':
-    assert len(sys.argv) == 6, "USAGE: port, n ,phi, epsilon, delta"
+    assert len(sys.argv) == 6, "USAGE: port, n, phi, epsilon, delta"
 
     # IMPORTANT: when running locally, it is *fundamental* that the
     # `master` setting is "local[*]" or "local[n]" with n > 1, otherwise
@@ -157,29 +155,22 @@ if __name__ == '__main__':
     # &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
     portExp = int(sys.argv[1])
-    print("Receiving data from port =", portExp)
-    
     n = int(sys.argv[2])
-    print("n = ", n)
-
     phi = float(sys.argv[3])
-    print("phi = ", phi)
-
     epsilon = float(sys.argv[4])
-    print("epsilon = ", epsilon)
-
     delta = float(sys.argv[5])
-    print("delta = ", delta)
+    print("INPUT PROPERTIES")
+    print(f"n = {n} phi = {phi} epsilon = {epsilon} delta = {delta} port = {portExp}")
         
     # &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
     # DEFINING THE REQUIRED DATA STRUCTURES TO MAINTAIN THE STATE OF THE STREAM
     # &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-    global streamLength, histogram, sample, approx_frequent_items
+    global streamLength, histogram, sample, approx_frequent_items, reservoir
     streamLength = [0] # Stream length (an array to be passed by reference)
     histogram = {} # Hash Table for the distinct elements
-    all_elements = [] # List to store all the elements of the stream
     sample = {}  # Hash Table for the sticky frequent elements
     approx_frequent_items = []
+    all_elements = []
 
     # CODE TO PROCESS AN UNBOUNDED STREAM OF DATA IN BATCHES
     stream = ssc.socketTextStream("algo.dei.unipd.it", portExp, StorageLevel.MEMORY_AND_DISK)
@@ -189,34 +180,57 @@ if __name__ == '__main__':
     stream.foreachRDD(lambda time, batch: process_batch(time, batch))
     
     # MANAGING STREAMING SPARK CONTEXT
-    print("Starting streaming engine")
+    # print("Starting streaming engine")
     ssc.start()
-    print("Waiting for shutdown condition")
+    # print("Waiting for shutdown condition")
     stopping_condition.wait()
-    print("Stopping the streaming engine")
+    # print("Stopping the streaming engine")
     # NOTE: You will see some data being processed even after the
     # shutdown command has been issued: This is because we are asking
     # to stop "gracefully", meaning that any outstanding work
     # will be done.
     ssc.stop(False, True) # False = Stop streaming context but not sparkContext; True = stopGracefully
-    print("Streaming engine stopped")
+    # print("Streaming engine stopped")
 
     # COMPUTE AND PRINT FINAL STATISTICS
-    print("Number of items processed =", streamLength[0])
-    print("Number of items in the data structure =", len(histogram))
-    print("Since we only wanted ", n, "elements to be processed, let's reduce a bit the stream")
-    print("All the stream has been stored in the list stream of ", len(all_elements), " elements")
+    # print("Number of items processed =", streamLength[0])
 
+    print("EXACT ALGORITHM")
+    print("Number of items in the data structure =", len(histogram))
     freq = phi * n  # Example threshold
     true_frequent_items = {key: histogram[key] for key in histogram if histogram[key] > freq}
-    print(f"True frequent items (frequency > {freq}):", true_frequent_items)
+    print("Number of true frequent items =", len(true_frequent_items))
+    print("True frequent items:")
+    for element in true_frequent_items:
+        print(element)
 
+    # print("RESERVOIR SAMPLING")
+    # print("Size m of the sample =", int(1/phi))
+    # all_elements = all_elements[:n]
+    # print("All elements =", len(all_elements))
+    # reservoir = reservoir_sampling(all_elements, int(1/phi))    
+    # print("Reservoir from reservoir sampling =", reservoir)
+    # distinct_items = list(set(reservoir))
+    # print("Number of estimated frequent items =", len(distinct_items))
+    # print("Estimated frequent items:")
+    # distinct_items.sort()
+    # for element in distinct_items:
+    #     if element in true_frequent_items:
+    #         print(element, "+")
+    #     else :
+    #         print(element, "-")
+    # common_items = list(set(true_frequent_items) & set(distinct_items))
+    # print("Number of true frequent items produced by RS =", len(common_items))
+
+    print("STICKY SAMPLING")
+    print("Number of items in the Hash Table =", len(sample))
     approx_frequent_items = [key for key in sample.keys() if sample[key] >= ((phi - epsilon) * n)]
-    
-    print("Approximate frequent items =", approx_frequent_items)
-    print("Frequency threshold =", ((phi - epsilon) * n))
-    print(f"Number of elements in sample = {len(sample)}")
-
-    all_elements = all_elements[:n]
-    print("Reduced stream to ", len(all_elements), " elements")
-    print("Final sample of 100 items by Reservoir Sampling: ", reservoir_sampling(all_elements, int(1 / phi)))
+    print("Number of estimated frequent items =", len(approx_frequent_items))
+    approx_frequent_items.sort()
+    for element in approx_frequent_items:
+        if element in true_frequent_items:
+            print(element, "+")
+        else :
+            print(element, "-")
+    common_items = list(set(true_frequent_items) & set(approx_frequent_items))
+    print("Number of true frequent items produced by SS =", len(common_items))
