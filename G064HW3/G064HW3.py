@@ -5,6 +5,7 @@ import threading
 import sys
 import random as rand
 import math
+import winsound
 
 
 # After how many items should we stop?
@@ -234,3 +235,7 @@ if __name__ == '__main__':
             print(element, "-")
     common_items = list(set(true_frequent_items) & set(approx_frequent_items))
     print("Number of true frequent items produced by SS =", len(common_items))
+
+    duration = 3000 # milliseconds
+    freq = 440 # Hz
+    winsound.Beep(freq, duration)
